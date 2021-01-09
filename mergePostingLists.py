@@ -1,257 +1,37 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[5]:
-
+#! python3
 
 import re
+import sys
 import nltk
-import collections 
-from nltk.stem import PorterStemmer
 from nltk.corpus import stopwords
-#nltk.download("stopwords")
+from nltk.stem import PorterStemmer
+nltk.download("stopwords")
 import json
 
+class Node:
+    next = None
 
-# In[9]:
+    def __init__(self, data):
+        self.data = data
+        self.next = None
 
+class LinkedList:
 
-stop_words = {'a',
- 'about',
- 'above',
- 'after',
- 'again',
- 'against',
- 'ain',
- 'all',
- 'am',
- 'an',
- 'and',
- 'any',
- 'are',
- 'aren',
- "aren't",
- 'as',
- 'at',
- 'be',
- 'because',
- 'been',
- 'before',
- 'being',
- 'below',
- 'between',
- 'both',
- 'but',
- 'by',
- 'can',
- 'couldn',
- "couldn't",
- 'd',
- 'did',
- 'didn',
- "didn't",
- 'do',
- 'does',
- 'doesn',
- "doesn't",
- 'doing',
- 'don',
- "don't",
- 'down',
- 'during',
- 'each',
- 'few',
- 'for',
- 'from',
- 'further',
- 'had',
- 'hadn',
- "hadn't",
- 'has',
- 'hasn',
- "hasn't",
- 'have',
- 'haven',
- "haven't",
- 'having',
- 'he',
- 'her',
- 'here',
- 'hers',
- 'herself',
- 'him',
- 'himself',
- 'his',
- 'how',
- 'i',
- 'if',
- 'in',
- 'into',
- 'is',
- 'isn',
- "isn't",
- 'it',
- "it's",
- 'its',
- 'itself',
- 'just',
- 'll',
- 'm',
- 'ma',
- 'me',
- 'mightn',
- "mightn't",
- 'more',
- 'most',
- 'mustn',
- "mustn't",
- 'my',
- 'myself',
- 'needn',
- "needn't",
- 'no',
- 'nor',
- 'not',
- 'now',
- 'o',
- 'of',
- 'off',
- 'on',
- 'once',
- 'only',
- 'or',
- 'other',
- 'our',
- 'ours',
- 'ourselves',
- 'out',
- 'over',
- 'own',
- 're',
- 's',
- 'same',
- 'shan',
- "shan't",
- 'she',
- "she's",
- 'should',
- "should've",
- 'shouldn',
- "shouldn't",
- 'so',
- 'some',
- 'such',
- 't',
- 'than',
- 'that',
- "that'll",
- 'the',
- 'their',
- 'theirs',
- 'them',
- 'themselves',
- 'then',
- 'there',
- 'these',
- 'they',
- 'this',
- 'those',
- 'through',
- 'to',
- 'too',
- 'under',
- 'until',
- 'up',
- 've',
- 'very',
- 'was',
- 'wasn',
- "wasn't",
- 'we',
- 'were',
- 'weren',
- "weren't",
- 'what',
- 'when',
- 'where',
- 'which',
- 'while',
- 'who',
- 'whom',
- 'why',
- 'will',
- 'with',
- 'won',
- "won't",
- 'wouldn',
- "wouldn't",
- 'y',
- 'you',
- "you'd",
- "you'll",
- "you're",
- "you've",
- 'your',
- 'yours',
- 'yourself',
- 'yourselves'} 
-ps = PorterStemmer()
+    def __init__(self):
+        self.head = None
+        self.length = 0
 
-
-# In[10]:
-
-
-file = open("testData.txt","r",encoding="utf8")
-
-
-# In[11]:
-
-
-f = file.readlines()
-print(f)
-
-
-# In[20]:
-
-
-docId=''
-docText=''
-mapp = {}
-for eachLine in f:
-    split = eachLine.split("\t")
-    docId = split[0]
-    docId = int(docId)
-    docText = split[1]
-    
-    processedText = preprocessText(docText)
-    
-    whiteSpaceToken = processedText.split(" ")
-    
-    for token in whiteSpaceToken:
-        if token not in stop_words:
-            stem_token = ps.stem(token)
-            if stem_token not in mapp:
-                docList = [docId]
-                mapp.__setitem__(stem_token, docList)
-            else:
-                docList=mapp.__getitem__(stem_token)
-                docList.append(docId)
-                sorted(docList)
-
-
-# In[21]:
-
-
-finalMap = {}
-for token in mapp:
-    tempList = mapp.__getitem__(token)
-    llist = LinkedList()
-    finalMap.__setitem__(token, llist)
-    for docId in tempList:
-        llist.insert(docId)
-
-
-# In[22]:
+    def insert(self, data):
+        if (self.head == None):
+            node = Node(data)
+            self.head = node
+        else:
+            node = Node(data)
+            temp = self.head
+            while temp.next is not None:
+                temp = temp.next
+            temp.next = node
+        self.length=self.length+1
 
 
 def preprocessText(txt):
@@ -261,132 +41,163 @@ def preprocessText(txt):
     txt = txt.strip()
     return txt
 
-
-# In[23]:
-
-
 def removeWhiteSpaces(tk):
     return re.sub(' +', ' ', tk)
-
-
-# In[24]:
-
 
 def removeSpecialCharacters(tk):
     return re.sub('[^A-Za-z0-9]+', ' ', tk)
 
 
-# In[25]:
+def invokeMergeOperationForQuery(queryTokens, finalMap):
+    postingToLengthMap = {}
+    tempPostingList = {}
+    for token in queryTokens:
+        tempLinkedList = finalMap.__getitem__(token)
+        tempPostingList.__setitem__(token,tempLinkedList)
+        postingToLengthMap.__setitem__(token, tempLinkedList.length)
+    #print(postingToLengthMap)
+    #result = mergeTwoPostings(finalMap.__getitem__('clinic'),finalMap.__getitem__('covid'))
+    #print(result[0] , result[1])
+    totalNumberOfComparison = 0;
+    finalResult = None
+    while postingToLengthMap.__len__() != 1:
+        l = sortTheMapBasedOnValue(postingToLengthMap)
+        t1 = l[0][0]
+        t2 = l[1][0]
+        p1 = tempPostingList.__getitem__(t1)
+        p2 = tempPostingList.__getitem__(t2)
+        postingToLengthMap.pop(t1)
+        postingToLengthMap.pop(t2)
+        result = mergeTwoPostings(p1, p2)
+        totalNumberOfComparison = totalNumberOfComparison + result[1]
+        postingToLengthMap.__setitem__(t1+t2, result[0].length)
+        tempPostingList.__setitem__(t1+t2,result[0])
+        finalResult = result[0]
 
 
-preprocessText('is hydroxychloroquine effective?')
+    #print(postingToLengthMap,totalNumberOfComparison, finalResult)
+
+    tempList = []
+    if(finalResult is not None):
+        head = finalResult.head
+        while head is not None:
+            tempList.append(head.data)
+            head = head.next
+
+    return tempList,totalNumberOfComparison
 
 
-# In[26]:
+def sortTheMapBasedOnValue(postingToLengthMap):
+    return sorted(postingToLengthMap.items(), key=lambda kv: (kv[1], kv[0]))
 
+def mergeTwoPostings(llist1, llist2):
 
-finalMapp = {}
-with open("sample_res.json", "w") as p:
-    finalMapp.__setitem__("postingsList", mapp)
-    json.dump(finalMapp,p, indent=1)
-
-
-# In[27]:
-
-
-class Node:
-    
-    next=None
-    
-    def __init__(self, data):
-        self.data = data
-        self.next = None
-
-
-# In[28]:
-
-
-class LinkedList:
-    
-    def __init__(self):
-        self.head=None
-        self.length = 0
-    
-    def insert(self,data):
-        if(self.head == None):
-            node = Node(data)
-            self.head = node  
+    temp=[]
+    noOfComparison=0
+    head1 = llist1.head
+    head2 = llist2.head
+    while head1 is not None and head2 is not None:
+        noOfComparison = noOfComparison + 1
+        if(head1.data == head2.data):
+            temp.append(head1.data)
+            head1 = head1.next
+            head2 = head2.next
+        elif head1.data > head2.data:
+            head2 = head2.next
         else:
-            node = Node(data)
-            temp = self.head
-            while temp.next is not None:
-                temp = temp.next
-            temp.next=node
-        self.length = self.length + 1
-                    
+            head1 = head1.next
+
+    llist = LinkedList()
+    for docId in temp:
+        llist.insert(docId)
+
+    return llist,noOfComparison
 
 
-# In[2]:
+def populatePostingList(stem_token, postingListMap, linkedList):
+    tempList = []
+    head = linkedList.head
+    while head is not None:
+        tempList.append(head.data)
+        head = head.next
+    postingListMap.__setitem__(stem_token,tempList)
 
 
-llist = LinkedList()
+def main():
+    input_file = str(sys.argv[1])
+    output_file = sys.argv[2]
+    query_file = sys.argv[3]
+    #input = sys.argv
+    #print(input)
+    stop_words = set(stopwords.words('english'))
+    ps = PorterStemmer()
+    file = open(input_file, "r", encoding="utf8")
+    f = file.readlines()
+    docId = ''
+    docText = ''
+    mapp = {}
+    for eachQuery in f:
+        split = eachQuery.split("\t")
+        docId = split[0]
+        docId = int(docId)
+        docText = split[1]
 
+        processedText = preprocessText(docText)
 
-# In[13]:
+        whiteSpaceToken = processedText.split(" ")
 
+        for token in whiteSpaceToken:
+            if token not in stop_words:
+                stem_token = ps.stem(token)
+                if stem_token not in mapp:
+                    docList = set()
+                    docList.add(docId)
+                    mapp.__setitem__(stem_token, docList)
+                else:
+                    docList = set(mapp.__getitem__(stem_token))
+                    docList.add(docId)
+                    sortedList = sorted(docList)
+                    mapp.__setitem__(stem_token,sortedList)
+    finalMap = {}
 
-llist.insert(21)
+    for token in mapp:
+        tempList = mapp.__getitem__(token)
+        llist = LinkedList()
+        finalMap.__setitem__(token, llist)
+        for docId in tempList:
+            llist.insert(docId)
+    #print(finalMap)
 
+    queryFile = open(query_file, "r", encoding="utf8")
+    qf = queryFile.readlines()
+    formattedResult = {}
+    postingListMap ={}
+    daatMap = {}
+    for eachQuery in qf:
+        queryPreProcessText = preprocessText(eachQuery)
+        querySplits = queryPreProcessText.split(" ")
+        queryTokens = []
+        for i in querySplits:
+            if i not in stop_words:
+                stem_token = ps.stem(i)
+                queryTokens.append(stem_token)
+                if (stem_token not in postingListMap):
+                    linkedList = finalMap.__getitem__(stem_token)
+                    populatePostingList(stem_token,postingListMap,linkedList)
+        #print(queryTokens)
+        result = invokeMergeOperationForQuery(queryTokens,finalMap)
+        resultsMap = {}
+        resultsMap.__setitem__("results", result[0])
+        resultsMap.__setitem__("num_docs",result[0].__len__())
+        resultsMap.__setitem__("num_comparisons", result[1])
+        eachQuery = eachQuery.strip()
+        daatMap.__setitem__(eachQuery,resultsMap)
 
-# In[14]:
+    formattedResult.__setitem__("postingsList", postingListMap)
+    formattedResult.__setitem__("daatAnd" , daatMap)
 
+    with open(output_file, "w") as p:
+        json.dump(formattedResult,p)
 
-llist.length
-
-
-# In[227]:
-
-
-temp = llist.head
-while temp is not None:
-    print(temp.data)
-    temp = temp.next
-
-
-# In[29]:
-
-
-queryFile = open("testQuery.txt","r",encoding="utf8")
-qf = queryFile.readlines()
-queryPostingMap = {}
-for eachLine in qf:
-    queryPreProcessText = preprocessText(eachLine)
-    querySplits = queryPreProcessText.split(" ")
-    queryTokens = []
-    for i in querySplits:
-        if i not in stop_words:
-            stem_token = ps.stem(i)
-            queryTokens.append(stem_token)
-            if(stem_token not in queryPostingMap):
-                linkedList = finalMap.__getitem__(stem_token)
-                queryPostingMap.__setitem__(stem_token, linkedList)
-    print(queryTokens)
-
-
-# In[30]:
-
-
-queryFile.close()
-
-
-# In[32]:
-
-
-queryPostingMap
-
-
-# In[ ]:
-
-
-
-
+if __name__=="__main__":
+    main()
